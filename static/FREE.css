@@ -293,7 +293,41 @@ span[style*="color:gold"] {
 }
 
 
+#page-import {
+  background-image: url("/static/fibre.jpg"); no-repeat center center fixed;
+  background-size: cover;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+#page-stats {
+  background-image: url("/static/fibre.jpg"); no-repeat center center fixed;
+  background-size: cover;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#page-ventes {
+  background-image: url("/static/fibre.jpg"); no-repeat center center fixed;
+  background-size: cover;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#page-changer-mdp {
+  background-image: url("/static/fibre.jpg"); no-repeat center center fixed;
+  background-size: cover;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 
 
