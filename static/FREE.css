@@ -296,3 +296,14 @@ span[style*="color:gold"] {
 
 
 
+
+#page-import .form-card,
+#page-changer-mdp .form-card {
+  max-width: 600px;
+  margin: auto;
+}
+
+#page-import table,
+#page-changer-mdp table {
+  min-width: unset;
+}
