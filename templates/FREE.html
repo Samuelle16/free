@@ -320,16 +320,21 @@ function enableTableDragScroll() {
 
 function generateManagers(data) {
   const current = JSON.parse(localStorage.getItem("managers") || "{}");
-  data.forEach(row => {
-    if (row["STATUT"] === "VV") return;
-    const manager = row["ANIMATEUR"];
+
+  const headers = data[0]; // 1ère ligne = titres
+  data.slice(1).forEach(row => {
+    const rowObj = Object.fromEntries(headers.map((h, i) => [h.trim(), row[i]]));
+    if (rowObj["STATUT"] === "VV") return;
+    const manager = rowObj["ANIMATEUR"];
     if (manager && !current[manager]) {
       const pwd = Math.random().toString(36).slice(-8);
       current[manager] = { password: pwd, role: "manager" };
     }
   });
+
   localStorage.setItem("managers", JSON.stringify(current));
 }
+
 
 function exportManagers() {
   const managers = JSON.parse(localStorage.getItem("managers") || "{}");
