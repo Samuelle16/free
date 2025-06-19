@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>CRM Free Fibre</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='FREE.css') }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <h1>SAM CRM FIBRE</h1>
+    <div id="nav-menu" style="display:none">
+  <a href="#import">Import</a>
+  <a href="#ventes">Détails des ventes</a>
+  <a href="#stats">Statistiques</a>
+  <a href="#changer-mdp">Changer Mot de Passe</a>
+  <a href="#logout" onclick="logout()">Déconnexion</a>
+</div>
+  </nav>
+
+  <!-- LOGIN -->
+  <section id="page-login" class="page">
+    <div class="form-card">
+      <h2>Connexion</h2>
+      <select id="login-name"></select><br>
+      <input type="password" id="login-password" placeholder="Mot de passe"><br>
+      <button onclick="login()">Se connecter</button>
+      <p id="login-error" class="error"></p>
+    </div>
+  </section>
+
+  <!-- IMPORT -->
+  <section id="page-import" class="page" style="display:none;">
+    <div class="form-card">
+      <h2>Import de Fichier</h2>
+      <input type="file" id="excelFile" accept=".xlsx, .xls"><br>
+      <button id="loadExcelButton" style="display:none;" onclick="loadExcelData()">Charger le fichier</button>
+      <button onclick="location.hash='#stats'">Voir les statistiques</button>
+      <button onclick="exportManagers()">Télécharger identifiants managers</button>
+
+      <div id="table-container"></div>
+    </div>
+  </section>
+
+
+
+  <!-- STATISTIQUES -->
+  <section id="page-stats" class="page" style="display:none;">
+    <div class="form-card">
+      <h2>Salaires 💰</h2>
+      <div id="stats-container"></div>
+    </div>
+  </section>
+
+
+  <!-- DÉTAILS DES VENTES -->
+<section id="page-ventes" class="page" style="display:none;">
+  <div class="form-card">
+    <h2>Détails des ventes</h2>
+    <div id="ventes-container"></div>
+  </div>
+</section>
+
+
+
+  <!-- CHANGER MOT DE PASSE -->
+  <section id="page-changer-mdp" class="page" style="display:none;">
+    <div class="form-card">
+      <h2>Changer mon mot de passe</h2>
+      <input type="password" id="new-password" placeholder="Nouveau mot de passe"><br>
+      <input type="password" id="confirm-password" placeholder="Confirmer"><br>
+      <button onclick="updatePassword()">Modifier</button>
+      <p id="password-message"></p>
+    </div>
+  </section>
+
+<script>
+const users = { admin: { password: "admin123", role: "admin" } };
+const pages = ["login", "import", "stats", "changer-mdp", "ventes"];
+
+const baremeCommissions = [
+  { contrat: "AUTO", statut: "JUNIOR", palier: 1, pop: 20, ultra: 20 },
+  { contrat: "AUTO", statut: "JUNIOR", palier: 2, pop: 40, ultra: 95 },
+  { contrat: "AUTO", statut: "JUNIOR", palier: 3, pop: 50, ultra: 105 },
+  { contrat: "AUTO", statut: "JUNIOR", palier: 4, pop: 60, ultra: 115 },
+  { contrat: "AUTO", statut: "CONFIRME", palier: 1, pop: 20, ultra: 20 },
+  { contrat: "AUTO", statut: "CONFIRME", palier: 2, pop: 45, ultra: 105 },
+  { contrat: "AUTO", statut: "CONFIRME", palier: 3, pop: 55, ultra: 115 },
+  { contrat: "AUTO", statut: "CONFIRME", palier: 4, pop: 65, ultra: 125 },
+  { contrat: "AUTO", statut: "FORMATEUR", palier: 1, pop: 20, ultra: 20 },
+  { contrat: "AUTO", statut: "FORMATEUR", palier: 2, pop: 50, ultra: 115 },
+  { contrat: "AUTO", statut: "FORMATEUR", palier: 3, pop: 60, ultra: 125 },
+  { contrat: "AUTO", statut: "FORMATEUR", palier: 4, pop: 70, ultra: 135 },
+  { contrat: "AUTO", statut: "EXPERIMENTE", palier: 1, pop: 70, ultra: 135 },
+  { contrat: "AUTO", statut: "EXPERIMENTE", palier: 2, pop: 75, ultra: 145 },
+  { contrat: "AUTO", statut: "EXPERIMENTE", palier: 3, pop: 85, ultra: 160 },
+  { contrat: "AUTO", statut: "EXPERIMENTE", palier: 4, pop: 100, ultra: 170 },
+  { contrat: "AUTO", statut: "ANIMATEUR", palier: 1, pop: 85, ultra: 160 },
+  { contrat: "AUTO", statut: "ANIMATEUR", palier: 2, pop: 100, ultra: 170 },
+  { contrat: "AUTO", statut: "ANIMATEUR", palier: 3, pop: 105, ultra: 175 },
+  { contrat: "AUTO", statut: "ANIMATEUR", palier: 4, pop: 110, ultra: 180 },
+  { contrat: "VDI", statut: "JUNIOR", palier: 1, pop: 20, ultra: 20 },
+  { contrat: "VDI", statut: "JUNIOR", palier: 2, pop: 40, ultra: 80 },
+  { contrat: "VDI", statut: "JUNIOR", palier: 3, pop: 45, ultra: 90 },
+  { contrat: "VDI", statut: "JUNIOR", palier: 4, pop: 50, ultra: 100 },
+  { contrat: "VDI", statut: "CONFIRME", palier: 1, pop: 20, ultra: 20 },
+  { contrat: "VDI", statut: "CONFIRME", palier: 2, pop: 40, ultra: 85 },
+  { contrat: "VDI", statut: "CONFIRME", palier: 3, pop: 45, ultra: 95 },
+  { contrat: "VDI", statut: "CONFIRME", palier: 4, pop: 50, ultra: 105 },
+  { contrat: "VDI", statut: "FORMATEUR", palier: 1, pop: 20, ultra: 20 },
+  { contrat: "VDI", statut: "FORMATEUR", palier: 2, pop: 40, ultra: 90 },
+  { contrat: "VDI", statut: "FORMATEUR", palier: 3, pop: 45, ultra: 100 },
+  { contrat: "VDI", statut: "FORMATEUR", palier: 4, pop: 50, ultra: 110 }
+];
+
+
+const baremeMobiles = [
+  { contrat: "AUTO", statut: "JUNIOR", palier: 1, avec: 5, sans: 2.5 },
+  { contrat: "AUTO", statut: "JUNIOR", palier: 2, avec: 10, sans: 5 },
+  { contrat: "AUTO", statut: "JUNIOR", palier: 3, avec: 15, sans: 7.5 },
+  { contrat: "AUTO", statut: "JUNIOR", palier: 4, avec: 20, sans: 10 },
+  { contrat: "AUTO", statut: "CONFIRME", palier: 1, avec: 5, sans: 2.5 },
+  { contrat: "AUTO", statut: "CONFIRME", palier: 2, avec: 10, sans: 5 },
+  { contrat: "AUTO", statut: "CONFIRME", palier: 3, avec: 15, sans: 7.5 },
+  { contrat: "AUTO", statut: "CONFIRME", palier: 4, avec: 20, sans: 10 },
+  { contrat: "AUTO", statut: "FORMATEUR", palier: 1, avec: 5, sans: 2.5 },
+  { contrat: "AUTO", statut: "FORMATEUR", palier: 2, avec: 10, sans: 5 },
+  { contrat: "AUTO", statut: "FORMATEUR", palier: 3, avec: 15, sans: 7.5 },
+  { contrat: "AUTO", statut: "FORMATEUR", palier: 4, avec: 20, sans: 10 },
+  { contrat: "AUTO", statut: "EXPERIMENTE", palier: 1, avec: 5, sans: 2.5 },
+  { contrat: "AUTO", statut: "EXPERIMENTE", palier: 2, avec: 10, sans: 5 },
+  { contrat: "AUTO", statut: "EXPERIMENTE", palier: 3, avec: 15, sans: 7.5 },
+  { contrat: "AUTO", statut: "EXPERIMENTE", palier: 4, avec: 30, sans: 20 },
+  { contrat: "AUTO", statut: "ANIMATEUR", palier: 1, avec: 5, sans: 2.5 },
+  { contrat: "AUTO", statut: "ANIMATEUR", palier: 2, avec: 10, sans: 5 },
+  { contrat: "AUTO", statut: "ANIMATEUR", palier: 3, avec: 15, sans: 7.5 },
+  { contrat: "AUTO", statut: "ANIMATEUR", palier: 4, avec: 30, sans: 20 },
+  { contrat: "VDI", statut: "JUNIOR", palier: 1, avec: 5, sans: 2.5 },
+  { contrat: "VDI", statut: "JUNIOR", palier: 2, avec: 10, sans: 5 },
+  { contrat: "VDI", statut: "JUNIOR", palier: 3, avec: 15, sans: 7.5 },
+  { contrat: "VDI", statut: "JUNIOR", palier: 4, avec: 20, sans: 10 },
+  { contrat: "VDI", statut: "CONFIRME", palier: 1, avec: 5, sans: 2.5 },
+  { contrat: "VDI", statut: "CONFIRME", palier: 2, avec: 10, sans: 5 },
+  { contrat: "VDI", statut: "CONFIRME", palier: 3, avec: 15, sans: 7.5 },
+  { contrat: "VDI", statut: "CONFIRME", palier: 4, avec: 20, sans: 10 },
+  { contrat: "VDI", statut: "FORMATEUR", palier: 1, avec: 5, sans: 2.5 },
+  { contrat: "VDI", statut: "FORMATEUR", palier: 2, avec: 10, sans: 5 },
+  { contrat: "VDI", statut: "FORMATEUR", palier: 3, avec: 15, sans: 7.5 },
+  { contrat: "VDI", statut: "FORMATEUR", palier: 4, avec: 20, sans: 10 }
+];
+
+
+
+let fileToLoad = null;
+let latestData = [];
+
+window.addEventListener("hashchange", router);
+function router() {
+  const session = JSON.parse(localStorage.getItem("userSession"));
+  const hash = location.hash.replace('#', '') || "login";
+  const isLoggedIn = !!session;
+  if (!isLoggedIn && hash !== "login") {
+    location.hash = "login";
+    return;
+  }
+
+ pages.forEach(p => {
+  const pageElement = document.getElementById(`page-${p}`);
+  if (!pageElement) return;
+
+  // Si manager, bloquer les pages import et changer-mdp
+  if (session?.role === "manager" && (p === "import" || p === "changer-mdp")) {
+    pageElement.style.display = "none";
+  } else {
+    pageElement.style.display = (p === hash) ? 'block' : 'none';
+  }
+});
+
+
+  document.getElementById("nav-menu").style.display = isLoggedIn ? "block" : "none";
+
+  const navMenu = document.getElementById("nav-menu");
+if (session?.role === "manager") {
+  navMenu.querySelector('a[href="#import"]')?.remove();
+  navMenu.querySelector('a[href="#changer-mdp"]')?.remove();
+}
+
+
+  if (hash === "stats") setTimeout(generateStats, 100);
+  if (hash === "ventes") setTimeout(renderRawVentes, 100);
+}
+
+router();
+
+function login() {
+  const name = document.getElementById("login-name").value;
+  const pass = document.getElementById("login-password").value;
+  const managers = JSON.parse(localStorage.getItem("managers") || "{}");
+  const allUsers = { ...users, ...managers };
+ if (allUsers[name] && allUsers[name].password === pass) {
+  const role = allUsers[name].role;
+  localStorage.setItem("userSession", JSON.stringify({ name, role }));
+  location.hash = role === "manager" ? "ventes" : "import";
+}
+ else {
+    document.getElementById("login-error").innerText = "Identifiants incorrects";
+  }
+}
+
+// Permet de se connecter avec la touche "Entrée"
+document.getElementById("login-password").addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    login();
+  }
+});
+
+
+function logout() {
+  localStorage.removeItem("userSession");
+  location.hash = "";
+  setTimeout(() => location.hash = "login", 50);
+}
+
+function generateDropdownUsers() {
+  const loginSelect = document.getElementById("login-name");
+  loginSelect.innerHTML = "<option value='admin'>admin</option>";
+  const managers = JSON.parse(localStorage.getItem("managers") || "{}");
+  Object.keys(managers).forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    loginSelect.appendChild(opt);
+  });
+}
+generateDropdownUsers();
+
+document.getElementById("excelFile")?.addEventListener("change", (e) => {
+  fileToLoad = e.target.files[0];
+  document.getElementById("loadExcelButton").style.display = fileToLoad ? "inline-block" : "none";
+});
+
+function loadExcelData() {
+  if (!fileToLoad) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const data = new Uint8Array(event.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false }); // lecture brut
+    localStorage.setItem("ventes_raw", JSON.stringify(rows)); // on stocke le tableau brut
+    renderRawTable(rows);
+    alert("✅ Fichier importé avec succès !");
+  };
+  reader.readAsArrayBuffer(fileToLoad);
+}
+
+
+
+
+function renderRawVentes() {
+  const data = JSON.parse(localStorage.getItem("ventes_raw") || "[]");
+  const session = JSON.parse(localStorage.getItem("userSession") || "{}");
+  const container = document.getElementById("ventes-container");
+
+  if (!data.length) {
+    container.innerHTML = "<p>Aucune donnée importée.</p>";
+    return;
+  }
+
+  let html = "<table><tbody>";
+
+   data.slice(1).forEach(row => {
+    const manager = row[15]?.trim(); // Colonne 16
+    if (session.role === "manager" && session.name !== manager) return;
+
+    html += "<tr>" + row.map(cell => `<td>${cell}</td>`).join("") + "</tr>";
+  });
+
+  html += "</tbody></table>";
+  container.innerHTML = `<div class="table-scroll">${html}</div>`;
+  enableTableDragScroll(); // pour scroll drag horizontal
+
+}
+
+
+
+function enableTableDragScroll() {
+  const scrollAreas = document.querySelectorAll('.table-scroll');
+
+  scrollAreas.forEach(area => {
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    area.addEventListener('mousedown', (e) => {
+      isDown = true;
+      area.classList.add('active');
+      startX = e.pageX - area.offsetLeft;
+      scrollLeft = area.scrollLeft;
+    });
+
+    area.addEventListener('mouseleave', () => {
+      isDown = false;
+      area.classList.remove('active');
+    });
+
+    area.addEventListener('mouseup', () => {
+      isDown = false;
+      area.classList.remove('active');
+    });
+
+    area.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - area.offsetLeft;
+      const walk = (x - startX) * 1.5;
+      area.scrollLeft = scrollLeft - walk;
+    });
+  });
+}
+
+
+
+function generateManagers(data) {
+  const current = JSON.parse(localStorage.getItem("managers") || "{}");
+  data.forEach(row => {
+    if (row["STATUT"] === "VV") return;
+    const manager = row["ANIMATEUR"];
+    if (manager && !current[manager]) {
+      const pwd = Math.random().toString(36).slice(-8);
+      current[manager] = { password: pwd, role: "manager" };
+    }
+  });
+  localStorage.setItem("managers", JSON.stringify(current));
+}
+
+function exportManagers() {
+  const managers = JSON.parse(localStorage.getItem("managers") || "{}");
+  const rows = [["Nom", "Mot de passe"]];
+  Object.entries(managers).forEach(([nom, obj]) => {
+    rows.push([nom, obj.password]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Identifiants");
+  XLSX.writeFile(wb, "identifiants_managers.xlsx");
+}
+
+
+function renderTable(data) {
+  const container = document.getElementById("table-container");
+  if (!data.length) return;
+  const headers = Object.keys(data[0]);
+  let html = "<table><thead><tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr></thead><tbody>";
+  data.forEach(row => {
+    html += "<tr>" + headers.map(h => `<td>${row[h] ?? ""}</td>`).join("") + "</tr>";
+  });
+  html += "</tbody></table>";
+  container.innerHTML = html;
+}
+
+function getValueInsensitive(row, key) {
+  const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
+  return foundKey ? row[foundKey] : "";
+}
+
+
+function getCommission(contrat, statut, palier, offre) {
+  const match = baremeCommissions.find(row =>
+    row.contrat === contrat &&
+    row.statut === statut &&
+    row.palier === palier
+  );
+  return match ? (offre === "POP" ? match.pop : match.ultra) : 0;
+}
+
+
+
+
+function getMobileCommission(contrat, statut, palier, type) {
+  const row = baremeMobiles.find(r =>
+    r.contrat === contrat &&
+    r.statut === statut &&
+    r.palier === palier
+  );
+  if (!row) return 0;
+  return type === "AVEC" ? row.avec : row.sans;
+}
+
+
+
+function generateStats() {
+  const rawData = JSON.parse(localStorage.getItem("ventes_raw") || "[]");
+  if (rawData.length < 2) {
+    document.getElementById("stats-container").innerHTML = "<p style='color:red'>Aucune donnée disponible.</p>";
+    return;
+  }
+
+
+
+  const session = JSON.parse(localStorage.getItem("userSession"));
+  const stats = {};
+
+  const savedPaliers = JSON.parse(localStorage.getItem("paliersVoulus") || "{}");
+
+rawData.slice(1).forEach(row => {
+  const typeVente = row[14]?.trim();     // Colonne 15 : VR ou MOBILE
+  const manager = row[15]?.trim();       // Colonne 16
+  const vendeur = row[6]?.trim();        // Colonne 7
+  const offreBox = row[11]?.trim();      // Colonne 12 (POP ou ULTRA)
+  const mobileFlag = row[10]?.trim();    // Colonne 11 (Y ou N)
+  const contrat = row[16]?.trim();       // Colonne 17
+  const statutType = row[17]?.trim();    // Colonne 18
+  const zone = row[13]?.trim();          // Colonne 14 BONUS/MALUS
+
+  // Filtrage par manager
+  if (session.role !== "admin" && session.name !== manager) return;
+  if (!vendeur) return;
+
+  // Init
+  if (!stats[vendeur]) {
+   stats[vendeur] = {
+    total: 0,
+    totalVR: 0, // ✅ compteur spécial pour VR
+    offres: {},
+    commissionTotal: 0
+  };
+}
+
+
+  // Comptage des ventes VR
+  if (typeVente === "VR") {
+    if (!offreBox) return;
+    stats[vendeur].offres[offreBox] = (stats[vendeur].offres[offreBox] || 0) + 1;
+    stats[vendeur].total++;
+    stats[vendeur].totalVR++;   // ✅ uniquement VR
+
+    const total = stats[vendeur].total;
+     const totalVR = stats[vendeur].totalVR;
+    const palier = totalVR >= 31 ? 4 : totalVR >= 21 ? 3 : totalVR >= 11 ? 2 : totalVR >= 1 ? 1 : 0;
+    const palierVoulu = savedPaliers[vendeur] || palier;
+    const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
+
+    let commission = getCommission(contrat, statutType, palierEffectif, offreBox);
+    if (zone === "BONUS") commission += 20;
+    if (zone === "MALUS") commission -= 20;
+    stats[vendeur].commissionTotal += commission;
+  }
+
+  // Comptage des ventes MOBILE
+ else if (typeVente === "MOBILE") {
+  const contrat = row[16]?.trim();       // colonne 17
+  const statutType = row[17]?.trim();    // colonne 18
+  const mobileFlag = row[10]?.trim();    // colonne 11 (Y ou N)
+  stats[vendeur].total++;
+
+  const palier = stats[vendeur]?.total >= 31 ? 4 : stats[vendeur]?.total >= 21 ? 3 :
+                 stats[vendeur]?.total >= 11 ? 2 : stats[vendeur]?.total >= 1 ? 1 : 0;
+  const palierVoulu = savedPaliers[vendeur] || palier;
+  const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
+
+  if (mobileFlag === "Y") {
+    stats[vendeur].offres["MOBILE AVEC"] = (stats[vendeur].offres["MOBILE AVEC"] || 0) + 1;
+    stats[vendeur].commissionTotal += getMobileCommission(contrat, statutType, palierEffectif, "AVEC");
+  } else if (mobileFlag === "N") {
+    stats[vendeur].offres["MOBILE SANS"] = (stats[vendeur].offres["MOBILE SANS"] || 0) + 1;
+    stats[vendeur].commissionTotal += getMobileCommission(contrat, statutType, palierEffectif, "SANS");
+  }
+
+
+}
+
+});
+
+
+ let html = `<table><thead>
+<tr>
+  <th>Vendeur</th>
+  <th>Détail Offres</th>
+  <th>Total</th>
+  <th>Palier</th>
+  <th>Alerte</th>
+  <th>Palier Voulu</th> <!-- AJOUT ICI -->
+  <th>Commission</th>
+</tr>
+
+</thead><tbody>`;
+
+  for (const [vendeur, data] of Object.entries(stats)) {
+  const total = data.total;     // affichage total (VR + MOBILE)
+const totalVR = data.totalVR; // calcul du palier basé sur VR
+const palier = totalVR >= 31 ? 4 : totalVR >= 21 ? 3 : totalVR >= 11 ? 2 : totalVR >= 1 ? 1 : 0;
+
+
+  const savedPaliers = JSON.parse(localStorage.getItem("paliersVoulus") || "{}");
+const palierVoulu = savedPaliers[vendeur] || palier;
+const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
+
+
+  let alert = "";
+  if (palier === 4) {
+    alert = `<span style="color:gold; font-weight:bold; font-size:1.1em">👑 Bravo, vous êtes au sommet du Palier 4 !</span>`;
+  } else {
+    let nextPalier = null;
+    if (palier === 1) nextPalier = 11;
+    else if (palier === 2) nextPalier = 21;
+    else if (palier === 3) nextPalier = 31;
+
+    const reste = nextPalier ? nextPalier - total : 0;
+    if (reste > 0 && reste <= 3) {
+      alert = `<span style="color:gold; font-weight:bold">✨ Il vous reste ${reste} contrat${reste > 1 ? 's' : ''} pour atteindre le Palier ${palier + 1}</span>`;
+    }
+  }
+
+  const offres = Object.entries(data.offres).map(([k, v]) => `
+  <span class="badge-offre">
+    <strong>${v}</strong> ${k}
+  </span>
+`).join(" ");
+
+
+  const palierOptions = [1, 2, 3, 4].map(p => {
+    const disabled = p < palier ? 'disabled' : '';
+    return `<option value="${p}" ${disabled}>Palier ${p}</option>`;
+  }).join("");
+
+  const select = `<select class="select-palier-voulu" data-vendeur="${vendeur}">${palierOptions}</select>`;
+
+
+ html += `<tr>
+  <td>${vendeur}</td>
+  <td>${offres}</td>
+  <td><span class="badge-total">${total}</span></td>
+  <td>Palier ${palier}</td>
+  <td>${alert}</td>
+  <td>${select}</td>
+  <td><span class="badge-total">${stats[vendeur].commissionTotal?.toFixed(2) || 0} €</span></td>
+</tr>`;
+
+
+
+
+}
+
+ html += `</tbody></table>`;
+  document.getElementById("stats-container").innerHTML = `<div class="table-scroll">${html}</div>`;
+
+
+
+ 
+
+
+
+
+
+
+
+  // ✅ Ajout de l'événement de sélection ici (après que le HTML est injecté)
+  document.querySelectorAll(".select-palier-voulu").forEach(select => {
+    const vendeur = select.dataset.vendeur;
+    const saved = JSON.parse(localStorage.getItem("paliersVoulus") || "{}");
+
+    if (saved[vendeur]) {
+      select.value = saved[vendeur];
+    }
+
+    select.addEventListener("change", () => {
+      const newValue = select.value;
+      saved[vendeur] = parseInt(newValue);
+      localStorage.setItem("paliersVoulus", JSON.stringify(saved));
+      generateStats(); // Recalculer
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const scrollAreas = document.querySelectorAll('.table-scroll');
+
+  scrollAreas.forEach(area => {
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    area.addEventListener('mousedown', (e) => {
+      isDown = true;
+      area.classList.add('active');
+      startX = e.pageX - area.offsetLeft;
+      scrollLeft = area.scrollLeft;
+    });
+
+    area.addEventListener('mouseleave', () => {
+      isDown = false;
+      area.classList.remove('active');
+    });
+
+    area.addEventListener('mouseup', () => {
+      isDown = false;
+      area.classList.remove('active');
+    });
+
+    area.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - area.offsetLeft;
+      const walk = (x - startX) * 1.5;
+      area.scrollLeft = scrollLeft - walk;
+    });
+  });
+});
+
+</script>
+</body>
+</html>
