@@ -13,7 +13,7 @@
     <div id="nav-menu" style="display:none">
   <a href="#import">Import</a>
   <a href="#ventes">Détails des ventes</a>
-  <a href="#stats">Statistiques</a>
+  <a href="#stats">Salaires</a>
   <a href="#changer-mdp">Changer Mot de Passe</a>
   <a href="#logout" onclick="logout()">Déconnexion</a>
 </div>
@@ -31,17 +31,22 @@
   </section>
 
   <!-- IMPORT -->
-  <section id="page-import" class="page" style="display:none;">
-    <div class="form-card">
-      <h2>Import de Fichier</h2>
-      <input type="file" id="excelFile" accept=".xlsx, .xls"><br>
-      <button id="loadExcelButton" style="display:none;" onclick="loadExcelData()">Charger le fichier</button>
-      <button onclick="location.hash='#stats'">Voir les statistiques</button>
-      <button onclick="exportManagers()">Télécharger identifiants managers</button>
+ <section id="page-import" class="page" style="display:none;">
+  <div class="form-card">
+    <h2>Import de Fichier</h2>
 
-      <div id="table-container"></div>
-    </div>
-  </section>
+    <!-- Nouveau formulaire de chargement + upload -->
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+      <input type="file" name="excelFile" accept=".xlsx, .xls" required>
+      <button type="submit">Charger et sauvegarder</button>
+    </form>
+
+    <button onclick="location.hash='#stats'">Voir les statistiques</button>
+    <button onclick="exportManagers()">Télécharger identifiants managers</button>
+
+    <div id="table-container"></div>
+  </div>
+</section>
 
 
 
@@ -611,5 +616,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 </script>
+
+<script>
+  fetch("/static/donnees.json")
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        generateManagers(data);
+        generateDropdownUsers(); // met à jour le <select> aussi
+      }
+    });
+</script>
+
+
 </body>
 </html>
