@@ -36,8 +36,11 @@
     <h2>Import de Fichier</h2>
 
     <!-- Nouveau formulaire de chargement + upload -->
-    <input type="file" id="excelFile" accept=".xlsx,.xls">
-   <button type="button" onclick="loadExcelData()">Charger</button>
+   <form action="/upload" method="POST" enctype="multipart/form-data">
+  <input type="file" name="excelFile" accept=".xlsx,.xls" required>
+  <button type="submit">Charger et sauvegarder</button>
+</form>
+
 
 
 
@@ -246,20 +249,7 @@ document.getElementById("excelFile")?.addEventListener("change", (e) => {
   document.getElementById("loadExcelButton").style.display = fileToLoad ? "inline-block" : "none";
 });
 
-function loadExcelData() {
-  if (!fileToLoad) return;
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const data = new Uint8Array(event.target.result);
-    const workbook = XLSX.read(data, { type: "array" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false }); // lecture brut
-    localStorage.setItem("ventes_raw", JSON.stringify(rows)); // on stocke le tableau brut
-    renderRawTable(rows);
-    alert("✅ Fichier importé avec succès !");
-  };
-  reader.readAsArrayBuffer(fileToLoad);
-}
+
 
 
 
@@ -619,15 +609,23 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-  fetch("/static/donnees.json")
-    .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) {
-        generateManagers(data);
-        generateDropdownUsers(); // met à jour le <select> aussi
-      }
-    });
+// ✅ Recharge la page sur les stats après import réussi
+if (location.search.includes("reload=1")) {
+  location.hash = "#stats";
+}
+
+// ✅ Charger le fichier partagé donnees.json
+fetch("/static/donnees.json")
+  .then(res => res.json())
+  .then(data => {
+    if (Array.isArray(data)) {
+      localStorage.setItem("ventes_raw", JSON.stringify(data)); // Facultatif, pour conserver dans l'appareil aussi
+      generateManagers(data);
+      generateDropdownUsers();
+    }
+  });
 </script>
+
 
 
 
