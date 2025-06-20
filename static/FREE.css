@@ -385,3 +385,120 @@ span[style*="color:gold"] {
   overflow-x: auto;
   width: 100%;
 }
+
+
+
+/* NAVBAR style noir et doré */
+.navbar {
+  background-color: #000;
+  color: #FFD700;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  border-bottom: 2px solid #FFD700;
+  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.2);
+}
+
+.navbar h1 {
+  font-size: 22px;
+  margin: 0;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #FFD700;
+}
+
+/* Menu navigation */
+#nav-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+#nav-menu a {
+  color: #FFD700;
+  text-decoration: none;
+  background: #111;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #FFD700;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+#nav-menu a:hover {
+  background: #FFD700;
+  color: #000;
+  box-shadow: 0 0 8px #FFD700;
+}
+
+/* Responsive pour mobile */
+@media (max-width: 600px) {
+  #nav-menu {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar h1 {
+    margin-bottom: 10px;
+  }
+
+  #nav-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  #nav-menu a {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+}
+
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px;
+  background: black;
+  color: gold;
+}
+
+
+.navbar h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 30px;
+  color: gold;
+  letter-spacing: 1px;
+  margin: 0;
+  padding: 10px 0;
+  text-align: center;
+}
+
+
+
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
