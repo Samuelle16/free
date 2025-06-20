@@ -502,3 +502,140 @@ span[style*="color:gold"] {
   top: 0;
   z-index: 1000;
 }
+
+
+/* --- SIDEBAR --- */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 220px;
+  background-color: #000;
+  color: gold;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(255, 215, 0, 0.2);
+  z-index: 1000;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed {
+  transform: translateX(-100%);
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-header h2 {
+  font-family: 'Cinzel', serif;
+  margin: 0;
+  font-size: 20px;
+  color: gold;
+}
+
+.close-btn {
+  font-size: 20px;
+  cursor: pointer;
+  display: none;
+  color: gold;
+}
+
+.sidebar-nav {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.sidebar-nav a {
+  color: gold;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 8px;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.sidebar-nav a:hover {
+  border-left: 3px solid gold;
+  background-color: #111;
+}
+
+/* Mobile button */
+.mobile-menu-btn {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  font-size: 26px;
+  cursor: pointer;
+  color: gold;
+  display: none;
+  z-index: 1100;
+  background-color: #000;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.show {
+    transform: translateX(0);
+  }
+
+  .close-btn {
+    display: block;
+  }
+
+  .mobile-menu-btn {
+    display: block;
+  }
+}
+
+/* Décale le contenu principal */
+@media (min-width: 769px) {
+  .page {
+    margin-left: 240px;
+  }
+}
+
+
+.sidebar-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.8em;
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 2px;
+  padding: 20px 10px 10px;
+  color: #FFD700;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #d4af37, #f5d76e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sidebar-title span {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.sidebar-title {
+  /* ... styles existants ... */
+  border-bottom: 2px solid gold;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+
+
+
+
+

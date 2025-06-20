@@ -7,22 +7,36 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='FREE.css') }}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
 </head>
 <body>
-  <nav class="navbar">
-    <h1>SAM CRM FIBRE</h1>
-    <div id="nav-menu" style="display:none">
-  <a href="#import">📂 Import</a>
-<a href="#ventes">📋 Détails ventes</a>
-<a href="#stats">💰 Salaires</a>
-<a href="#changer-mdp">🔒 Mot de passe</a>
-<a href="#logout" onclick="logout()">🚪 Déconnexion</a>
+  <div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1 class="sidebar-title">SAM CRM</h2>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#import">📂 Import</a>
+    <a href="#ventes">📋 Détails ventes</a>
+    <a href="#stats">💰 Salaires</a>
+    <a href="#changer-mdp">🔒 Mot de passe</a>
+    <a href="#logout" onclick="logout()">🚪 Déconnexion</a>
+  </nav>
+</div>
+
+
+<!-- Toggle Button (visible uniquement en mobile) -->
+<div class="mobile-menu-btn" onclick="toggleSidebar()">
+ <i class="fas fa-sliders-h"></i>
+
 
 </div>
-  </nav>
+
+
+
 
   <!-- LOGIN -->
   <section id="page-login" class="page">
@@ -189,6 +203,7 @@ let fileToLoad = null;
 let latestData = [];
 
 window.addEventListener("hashchange", router);
+
 function router() {
   const session = JSON.parse(localStorage.getItem("userSession"));
   const hash = location.hash.replace('#', '') || "login";
@@ -211,13 +226,15 @@ function router() {
 });
 
 
-  document.getElementById("nav-menu").style.display = isLoggedIn ? "block" : "none";
+ // ✅ Cacher/afficher la sidebar si besoin (optionnel)
+document.getElementById("sidebar").style.display = isLoggedIn ? "block" : "none";
 
-  const navMenu = document.getElementById("nav-menu");
+// ✅ Supprimer les pages interdites pour les managers dans le menu
 if (session?.role === "manager") {
-  navMenu.querySelector('a[href="#import"]')?.remove();
-  navMenu.querySelector('a[href="#changer-mdp"]')?.remove();
+  document.querySelector('.sidebar-nav a[href="#import"]')?.remove();
+  document.querySelector('.sidebar-nav a[href="#changer-mdp"]')?.remove();
 }
+
 
 
   if (hash === "stats") setTimeout(generateStats, 100);
@@ -809,6 +826,25 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+<script>
+function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  sidebar.classList.toggle("show");
+
+
+  document.querySelectorAll(".sidebar-nav a").forEach(link => {
+  link.addEventListener("click", () => {
+    if (window.innerWidth <= 768) {
+      document.getElementById("sidebar").classList.remove("show");
+    }
+  });
+});
+
+}
+
+
+</script>
 
 
 
