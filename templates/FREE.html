@@ -287,7 +287,10 @@ function renderRawVentes() {
     return;
   }
 
-  let html = "<table><tbody>";
+  let html = "<table id='table-ventes' class='display compact' style='width:100%'><thead><tr>" +
+  data[0].map(col => `<th>${col}</th>`).join('') +
+  "</tr></thead><tbody>";
+
 
    data.slice(1).forEach(row => {
     const manager = row[15]?.trim(); // Colonne 16
@@ -298,7 +301,25 @@ function renderRawVentes() {
 
   html += "</tbody></table>";
   container.innerHTML = `<div class="table-scroll">${html}</div>`;
-  enableTableDragScroll(); // pour scroll drag horizontal
+
+ setTimeout(() => {
+    // ✅ Active le DataTable avec scroll horizontal uniquement
+    $('#table-ventes').DataTable({
+  paging: false,
+  scrollX: false,        // ❌ on désactive le scroll
+  autoWidth: true,       // ✅ force DataTables à réduire la table
+  info: false,
+  language: {
+    search: "🔍 Recherche : ",
+    zeroRecords: "Aucune donnée trouvée"
+  }
+});
+
+
+
+    // ✅ Active le scroll drag (souris) personnalisé
+    enableTableDragScroll();
+  }, 100);
 
 }
 
@@ -336,6 +357,27 @@ function enableTableDragScroll() {
       const walk = (x - startX) * 1.5;
       area.scrollLeft = scrollLeft - walk;
     });
+  });
+}
+
+
+
+
+
+function enableColumnFilters(tableSelector) {
+  const table = document.querySelector(tableSelector);
+  if (!table) return;
+
+  // Initialise DataTables sans filtres par colonne
+  $(table).DataTable({
+    orderCellsTop: true,
+    fixedHeader: true,
+    paging: false,
+    info: false,
+    language: {
+      search: "🔍 Recherche : ",
+      zeroRecords: "Aucune donnée trouvée",
+    }
   });
 }
 

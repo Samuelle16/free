@@ -378,3 +378,10 @@ span[style*="color:gold"] {
   border-color: gold;
   box-shadow: 0 0 5px gold;
 }
+
+
+
+.table-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
