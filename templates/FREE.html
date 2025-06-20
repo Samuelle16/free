@@ -82,6 +82,13 @@
 </form>
 
 
+ <h3>Importer les pénalités 📥</h3>
+<form action="/import_penalites" method="POST" enctype="multipart/form-data">
+  <input type="file" name="penaliteFile" accept=".xlsx,.xls" required>
+  <button type="submit">Charger pénalités</button>
+</form>
+
+
   
     <button onclick="exportManagers()">Télécharger identifiants managers</button>
 
@@ -475,7 +482,9 @@ function getMobileCommission(contrat, statut, palier, type) {
 
 
 
-function generateStats() {
+function generateStats() 
+{
+  const penalites = JSON.parse(localStorage.getItem("penalites") || "{}");
   const rawData = JSON.parse(localStorage.getItem("ventes_raw") || "[]");
   if (rawData.length < 2) {
     document.getElementById("stats-container").innerHTML = "<p style='color:red'>Aucune donnée disponible.</p>";
@@ -585,6 +594,7 @@ let html = `<table><thead>
   <th>Palier Voulu</th>
   <th>Commission</th>
   <th>Commission Formateur</th>
+  <th>Pénalité</th>
   <th>Salaire Final</th> <!-- ✅ Ajouté -->
 </tr>
 </thead><tbody>`;
@@ -602,7 +612,9 @@ const palierVoulu = savedPaliers[vendeur] || palier;
 const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
 
 const formateurSalaire = formateursSalaire[vendeur] || 0;
-const salaireFinal = data.commissionTotal + formateurSalaire;
+const penalite = penalites[vendeur] || 0;
+const salaireFinal = data.commissionTotal + formateurSalaire - penalite;
+
 
 
   let alert = "";
@@ -644,6 +656,7 @@ html += `<tr>
   <td>${select}</td>
   <td><span class="badge-total">${data.commissionTotal.toFixed(2)} €</span></td>
   <td><span class="badge-total">${formateurSalaire.toFixed(2)} €</span></td>
+<td><span class="badge-total">-${penalite.toFixed(2)} €</span></td>
   <td><span class="badge-total">${salaireFinal.toFixed(2)} €</span></td>
 </tr>`;
 
@@ -780,6 +793,16 @@ fetch("/static/formateurs.json")
   .then(data => {
     mapFormateurs = data; // format { vendeur1: [formateur1, formateur2], ... }
   });
+</script>
+
+<script>
+  
+fetch("/static/penalites.json")
+  .then(res => res.json())
+  .then(data => {
+    localStorage.setItem("penalites", JSON.stringify(data));
+  });
+
 </script>
 
 

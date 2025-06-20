@@ -54,6 +54,29 @@ def upload_file():
 
     return "Fichier non autorisé", 400
 
+@app.route('/import_penalites', methods=['POST'])
+def import_penalites():
+    file = request.files.get('penaliteFile')
+    if not file or not file.filename.endswith(('.xlsx', '.xls')):
+        return "Fichier non valide", 400
+
+    df = pd.read_excel(file)
+    vendeur_to_penalite = {}
+
+    for _, row in df.iterrows():
+        vendeur = str(row["Vendeur"]).strip()
+        penalite = float(row["Penalite"])
+        if vendeur:
+            vendeur_to_penalite[vendeur] = penalite
+
+    with open("static/penalites.json", "w", encoding="utf-8") as f:
+        json.dump(vendeur_to_penalite, f, ensure_ascii=False, indent=2)
+
+    return redirect("/?reload=1")
+
+
+
+
 # Route d'import des formateurs
 @app.route('/import_formateurs', methods=['POST'])
 def import_formateurs():
