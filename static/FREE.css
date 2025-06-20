@@ -354,3 +354,27 @@ span[style*="color:gold"] {
   cursor: pointer;
   box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
 }
+
+
+.dataTables_filter {
+  text-align: right !important;
+  margin-bottom: 1rem;
+}
+
+.dataTables_filter input {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: #1f1f1f;
+  color: gold;
+  font-weight: bold;
+  font-size: 0.95em;
+  width: 250px;
+  transition: all 0.2s ease-in-out;
+}
+
+.dataTables_filter input:focus {
+  outline: none;
+  border-color: gold;
+  box-shadow: 0 0 5px gold;
+}

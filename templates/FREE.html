@@ -6,6 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{{ url_for('static', filename='FREE.css') }}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
 </head>
 <body>
   <nav class="navbar">
@@ -576,12 +580,20 @@ html += `<tr>
   document.getElementById("stats-container").innerHTML = `<div class="table-scroll">${html}</div>`;
 
 
+setTimeout(() => {
+  $('#stats-container table').DataTable({
+    paging: false,
+    fixedHeader: true,
+    orderCellsTop: true,
+    language: {
+      search: "🔍 Recherche : ",
+      zeroRecords: "Aucune donnée trouvée",
+    }
+  });
+}, 50);
+
 
  
-
-
-
-
 
 
 
@@ -693,6 +705,11 @@ fetch("/static/formateurs.json")
     mapFormateurs = data; // format { vendeur1: [formateur1, formateur2], ... }
   });
 </script>
+
+
+
+
+
 
 
 </body>
