@@ -636,6 +636,14 @@ span[style*="color:gold"] {
 
 
 
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow-y: auto; /* ⚠️ active le scroll vertical */
+  max-height: calc(100vh - 100px); /* adapte la hauteur à l'écran */
+  padding-right: 10px; /* espace pour la barre de scroll */
+}
 
 
 
