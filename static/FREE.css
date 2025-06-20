@@ -341,3 +341,16 @@ span[style*="color:gold"] {
 #page-changer-mdp table {
   min-width: unset;
 }
+
+
+#page-stats button {
+  margin-bottom: 1rem;
+  padding: 10px 20px;
+  background: linear-gradient(to right, #f1c40f, #d4af37);
+  color: #121212;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+}

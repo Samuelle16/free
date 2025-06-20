@@ -42,10 +42,14 @@
 </form>
 
 
+ <h3>Importer les formateurs 📥</h3>
+    <form action="/import_formateurs" method="POST" enctype="multipart/form-data">
+      <input type="file" name="formateurFile" accept=".xlsx,.xls" required>
+      <button type="submit">Charger formateurs</button>
+    </form>
 
 
-
-    <button onclick="location.hash='#stats'">Voir les statistiques</button>
+  
     <button onclick="exportManagers()">Télécharger identifiants managers</button>
 
     <div id="table-container"></div>
@@ -58,6 +62,7 @@
   <section id="page-stats" class="page" style="display:none;">
     <div class="form-card">
       <h2>Salaires 💰</h2>
+      <button onclick="exportStatsToExcel()">📤 Exporter en Excel</button>
       <div id="stats-container"></div>
     </div>
   </section>
@@ -403,10 +408,13 @@ function generateStats() {
 
   const session = JSON.parse(localStorage.getItem("userSession"));
   const stats = {};
+  const formateursSalaire = {};
+
 
   const savedPaliers = JSON.parse(localStorage.getItem("paliersVoulus") || "{}");
 
 rawData.slice(1).forEach(row => {
+
   const typeVente = row[14]?.trim();     // Colonne 15 : VR ou MOBILE
   const manager = row[15]?.trim();       // Colonne 16
   const vendeur = row[6]?.trim();        // Colonne 7
@@ -415,6 +423,7 @@ rawData.slice(1).forEach(row => {
   const contrat = row[16]?.trim();       // Colonne 17
   const statutType = row[17]?.trim();    // Colonne 18
   const zone = row[13]?.trim();          // Colonne 14 BONUS/MALUS
+  
 
   // Filtrage par manager
   if (session.role !== "admin" && session.name !== manager) return;
@@ -432,23 +441,31 @@ rawData.slice(1).forEach(row => {
 
 
   // Comptage des ventes VR
-  if (typeVente === "VR") {
-    if (!offreBox) return;
-    stats[vendeur].offres[offreBox] = (stats[vendeur].offres[offreBox] || 0) + 1;
-    stats[vendeur].total++;
-    stats[vendeur].totalVR++;   // ✅ uniquement VR
+ if (typeVente === "VR") {
+  if (!offreBox) return;
+  stats[vendeur].offres[offreBox] = (stats[vendeur].offres[offreBox] || 0) + 1;
+  stats[vendeur].total++;
+  stats[vendeur].totalVR++;
 
-    const total = stats[vendeur].total;
-     const totalVR = stats[vendeur].totalVR;
-    const palier = totalVR >= 31 ? 4 : totalVR >= 21 ? 3 : totalVR >= 11 ? 2 : totalVR >= 1 ? 1 : 0;
-    const palierVoulu = savedPaliers[vendeur] || palier;
-    const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
+  const total = stats[vendeur].total;
+  const totalVR = stats[vendeur].totalVR;
+  const palier = totalVR >= 31 ? 4 : totalVR >= 21 ? 3 : totalVR >= 11 ? 2 : totalVR >= 1 ? 1 : 0;
+  const palierVoulu = savedPaliers[vendeur] || palier;
+  const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
 
-    let commission = getCommission(contrat, statutType, palierEffectif, offreBox);
-    if (zone === "BONUS") commission += 20;
-    if (zone === "MALUS") commission -= 20;
-    stats[vendeur].commissionTotal += commission;
-  }
+  let commission = getCommission(contrat, statutType, palierEffectif, offreBox);
+  if (zone === "BONUS") commission += 20;
+  if (zone === "MALUS") commission -= 20;
+
+  stats[vendeur].commissionTotal += commission;
+
+  // ✅ AJOUT ICI : rémunération du/des formateur(s)
+  const formateurs = mapFormateurs[vendeur] || [];
+  formateurs.forEach(formateur => {
+    formateursSalaire[formateur] = (formateursSalaire[formateur] || 0) + 10;
+  });
+}
+
 
   // Comptage des ventes MOBILE
  else if (typeVente === "MOBILE") {
@@ -476,18 +493,23 @@ rawData.slice(1).forEach(row => {
 });
 
 
- let html = `<table><thead>
+
+
+let html = `<table><thead>
 <tr>
   <th>Vendeur</th>
   <th>Détail Offres</th>
   <th>Total</th>
   <th>Palier</th>
   <th>Alerte</th>
-  <th>Palier Voulu</th> <!-- AJOUT ICI -->
+  <th>Palier Voulu</th>
   <th>Commission</th>
+  <th>Commission Formateur</th>
+  <th>Salaire Final</th> <!-- ✅ Ajouté -->
 </tr>
-
 </thead><tbody>`;
+
+
 
   for (const [vendeur, data] of Object.entries(stats)) {
   const total = data.total;     // affichage total (VR + MOBILE)
@@ -498,6 +520,9 @@ const palier = totalVR >= 31 ? 4 : totalVR >= 21 ? 3 : totalVR >= 11 ? 2 : total
   const savedPaliers = JSON.parse(localStorage.getItem("paliersVoulus") || "{}");
 const palierVoulu = savedPaliers[vendeur] || palier;
 const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
+
+const formateurSalaire = formateursSalaire[vendeur] || 0;
+const salaireFinal = data.commissionTotal + formateurSalaire;
 
 
   let alert = "";
@@ -530,14 +555,16 @@ const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
   const select = `<select class="select-palier-voulu" data-vendeur="${vendeur}">${palierOptions}</select>`;
 
 
- html += `<tr>
+html += `<tr>
   <td>${vendeur}</td>
   <td>${offres}</td>
   <td><span class="badge-total">${total}</span></td>
   <td>Palier ${palier}</td>
   <td>${alert}</td>
   <td>${select}</td>
-  <td><span class="badge-total">${stats[vendeur].commissionTotal?.toFixed(2) || 0} €</span></td>
+  <td><span class="badge-total">${data.commissionTotal.toFixed(2)} €</span></td>
+  <td><span class="badge-total">${formateurSalaire.toFixed(2)} €</span></td>
+  <td><span class="badge-total">${salaireFinal.toFixed(2)} €</span></td>
 </tr>`;
 
 
@@ -631,7 +658,41 @@ fetch("/static/donnees.json")
   });
 </script>
 
+<script>
 
+function exportStatsToExcel() {
+  const originalTable = document.querySelector("#stats-container table");
+  if (!originalTable) return;
+
+  // Clone la table pour éviter de modifier le DOM visible
+  const clonedTable = originalTable.cloneNode(true);
+
+  // Remplace les <select> par leur valeur sélectionnée
+  clonedTable.querySelectorAll("select").forEach(select => {
+    const selectedText = select.options[select.selectedIndex].textContent;
+    const td = select.closest("td");
+    td.textContent = selectedText;  // Remplace le contenu par le texte
+  });
+
+  // Crée le fichier Excel à partir de la table clonée
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.table_to_sheet(clonedTable);
+  XLSX.utils.book_append_sheet(wb, ws, "Statistiques");
+  XLSX.writeFile(wb, "statistiques_salaries.xlsx");
+}
+
+</script>
+
+
+<script>
+let mapFormateurs = {};
+
+fetch("/static/formateurs.json")
+  .then(res => res.json())
+  .then(data => {
+    mapFormateurs = data; // format { vendeur1: [formateur1, formateur2], ... }
+  });
+</script>
 
 
 </body>

@@ -24,7 +24,7 @@ def allowed_file(filename):
 def home():
     return render_template('FREE.html')
 
-# Route d'upload du fichier Excel
+# Route d'upload du fichier Excel principal
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'excelFile' not in request.files:
@@ -40,22 +40,44 @@ def upload_file():
         try:
             df = pd.read_excel(filepath)
 
-            # ✅ Conversion en tableau brut (tableau de lignes)
-            # ✅ Convertir tout le DataFrame en texte
+            # ✅ Conversion en tableau brut
             df_str = df.astype(str)
             data_list = [df_str.columns.tolist()] + df_str.values.tolist()
 
-
-            # ✅ Enregistrement au bon format
             with open("static/donnees.json", "w", encoding="utf-8") as f:
                 json.dump(data_list, f, ensure_ascii=False)
 
         except Exception as e:
             return f"Erreur de lecture Excel : {e}", 500
 
-        return redirect('/?reload=1')  # recharge la page avec redirection vers stats
+        return redirect('/?reload=1')
 
     return "Fichier non autorisé", 400
+
+# Route d'import des formateurs
+@app.route('/import_formateurs', methods=['POST'])
+def import_formateurs():
+    file = request.files.get('formateurFile')
+    if not file or not file.filename.endswith(('.xlsx', '.xls')):
+        return "Fichier non valide", 400
+
+    df = pd.read_excel(file)
+    vendeur_to_formateurs = {}
+
+    for _, row in df.iterrows():
+        vendeur = str(row["Vendeur"]).strip()
+        formateur = str(row["Formateur"]).strip()
+        if vendeur and formateur:
+            vendeur_to_formateurs.setdefault(vendeur, []).append(formateur)
+
+    # Supprimer les doublons
+    for vendeur in vendeur_to_formateurs:
+        vendeur_to_formateurs[vendeur] = list(set(vendeur_to_formateurs[vendeur]))
+
+    with open("static/formateurs.json", "w", encoding="utf-8") as f:
+        json.dump(vendeur_to_formateurs, f, ensure_ascii=False, indent=2)
+
+    return redirect('/?reload=1')
 
 # Lancement local
 if __name__ == '__main__':
