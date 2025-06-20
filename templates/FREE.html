@@ -496,7 +496,8 @@ function generateStats()
   const session = JSON.parse(localStorage.getItem("userSession"));
   const stats = {};
   const formateursSalaire = {};
-
+ 
+  const savedBonusManuels = JSON.parse(localStorage.getItem("bonusManuels") || "{}");
 
   const savedPaliers = JSON.parse(localStorage.getItem("paliersVoulus") || "{}");
 
@@ -595,6 +596,7 @@ let html = `<table><thead>
   <th>Commission</th>
   <th>Commission Formateur</th>
   <th>Pénalité</th>
+  <th><strong>BONUS</strong></th>
   <th>Salaire Final</th> <!-- ✅ Ajouté -->
 </tr>
 </thead><tbody>`;
@@ -613,7 +615,8 @@ const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
 
 const formateurSalaire = formateursSalaire[vendeur] || 0;
 const penalite = penalites[vendeur] || 0;
-const salaireFinal = data.commissionTotal + formateurSalaire - penalite;
+const bonusManuel = savedBonusManuels[vendeur] || 0;
+const salaireFinal = data.commissionTotal + formateurSalaire + bonusManuel - penalite;
 
 
 
@@ -657,9 +660,18 @@ html += `<tr>
   <td><span class="badge-total">${data.commissionTotal.toFixed(2)} €</span></td>
   <td><span class="badge-total">${formateurSalaire.toFixed(2)} €</span></td>
 <td><span class="badge-total">-${penalite.toFixed(2)} €</span></td>
+<td><input type="text" class="input-bonus" data-vendeur="${vendeur}" value="${formatEuro(bonusManuel)}" />
+</td>
   <td><span class="badge-total">${salaireFinal.toFixed(2)} €</span></td>
 </tr>`;
 
+function formatEuro(value) {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2
+  }).format(value);
+}
 
 
 
@@ -667,6 +679,21 @@ html += `<tr>
 
  html += `</tbody></table>`;
   document.getElementById("stats-container").innerHTML = `<div class="table-scroll">${html}</div>`;
+
+document.querySelectorAll(".input-bonus").forEach(input => {
+  input.addEventListener("change", () => {
+    const vendeur = input.dataset.vendeur;
+    const value = parseFloat(input.value) || 0;
+    savedBonusManuels[vendeur] = value;
+    localStorage.setItem("bonusManuels", JSON.stringify(savedBonusManuels));
+    generateStats(); // Recalcul
+  });
+
+   // Pour empêcher les caractères non numériques
+  input.addEventListener("input", () => {
+    input.value = input.value.replace(/[^\d,€.-]/g, "");
+  });
+});
 
 
 setTimeout(() => {
@@ -765,22 +792,29 @@ function exportStatsToExcel() {
   const originalTable = document.querySelector("#stats-container table");
   if (!originalTable) return;
 
-  // Clone la table pour éviter de modifier le DOM visible
   const clonedTable = originalTable.cloneNode(true);
 
-  // Remplace les <select> par leur valeur sélectionnée
+  // ✅ Convertir les <select> en texte
   clonedTable.querySelectorAll("select").forEach(select => {
     const selectedText = select.options[select.selectedIndex].textContent;
     const td = select.closest("td");
-    td.textContent = selectedText;  // Remplace le contenu par le texte
+    td.textContent = selectedText;
   });
 
-  // Crée le fichier Excel à partir de la table clonée
+  // ✅ Convertir les <input> en texte (ex: Bonus Manuel)
+  clonedTable.querySelectorAll("input.input-bonus").forEach(input => {
+    const value = input.value;
+    const td = input.closest("td");
+    td.textContent = value;  // remplacer input par son texte
+  });
+
+  // ✅ Export en Excel
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.table_to_sheet(clonedTable);
   XLSX.utils.book_append_sheet(wb, ws, "Statistiques");
   XLSX.writeFile(wb, "statistiques_salaries.xlsx");
 }
+
 
 </script>
 
@@ -804,6 +838,8 @@ fetch("/static/penalites.json")
   });
 
 </script>
+
+
 
 
 <script>
