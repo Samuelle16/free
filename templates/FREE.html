@@ -52,6 +52,20 @@
       <button type="submit">Charger formateurs</button>
     </form>
 
+ <h3>Bonus/Malus par Manager</h3>
+<form id="bonus-malus-form">
+  <label for="manager-select">Manager :</label>
+  <select id="manager-select"></select><br>
+
+  <label for="bonus-amount">Montant Bonus (€) :</label>
+  <input type="number" id="bonus-amount" value="20"><br>
+
+  <label for="malus-amount">Montant Malus (€) :</label>
+  <input type="number" id="malus-amount" value="20"><br>
+
+  <button type="submit">Enregistrer</button>
+</form>
+
 
   
     <button onclick="exportManagers()">Télécharger identifiants managers</button>
@@ -428,6 +442,8 @@ rawData.slice(1).forEach(row => {
   const statutType = row[17]?.trim();    // Colonne 18
   const zone = row[13]?.trim();          // Colonne 14 BONUS/MALUS
   
+  const configBonusMalus = JSON.parse(localStorage.getItem("bonusMalus") || "{}");
+  const managerConfig = configBonusMalus[manager] || { bonus: 20, malus: 20 };
 
   // Filtrage par manager
   if (session.role !== "admin" && session.name !== manager) return;
@@ -458,8 +474,8 @@ rawData.slice(1).forEach(row => {
   const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
 
   let commission = getCommission(contrat, statutType, palierEffectif, offreBox);
-  if (zone === "BONUS") commission += 20;
-  if (zone === "MALUS") commission -= 20;
+  if (zone === "BONUS") commission += managerConfig.bonus;
+  if (zone === "MALUS") commission -= managerConfig.malus;
 
   stats[vendeur].commissionTotal += commission;
 
@@ -707,6 +723,48 @@ fetch("/static/formateurs.json")
 </script>
 
 
+<script>
+function loadBonusMalusUI() {
+  const managers = JSON.parse(localStorage.getItem("managers") || "{}");
+  const select = document.getElementById("manager-select");
+  select.innerHTML = "";
+
+  Object.keys(managers).forEach(mgr => {
+    const opt = document.createElement("option");
+    opt.value = mgr;
+    opt.textContent = mgr;
+    select.appendChild(opt);
+  });
+
+  // Afficher valeurs actuelles si existantes
+  select.addEventListener("change", () => {
+    const config = JSON.parse(localStorage.getItem("bonusMalus") || "{}");
+    const selected = select.value;
+    document.getElementById("bonus-amount").value = config[selected]?.bonus ?? 20;
+   document.getElementById("malus-amount").value = config[selected]?.malus ?? 20;
+
+  });
+
+  select.dispatchEvent(new Event("change")); // init
+}
+
+document.getElementById("bonus-malus-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const manager = document.getElementById("manager-select").value;
+  const bonus = parseFloat(document.getElementById("bonus-amount").value);
+  const malus = parseFloat(document.getElementById("malus-amount").value);
+
+  const config = JSON.parse(localStorage.getItem("bonusMalus") || "{}");
+  config[manager] = { bonus, malus };
+  localStorage.setItem("bonusMalus", JSON.stringify(config));
+  alert("Configuration enregistrée !");
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const session = JSON.parse(localStorage.getItem("userSession") || "{}");
+  if (session.role === "admin") loadBonusMalusUI();
+});
+</script>
 
 
 
