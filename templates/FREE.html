@@ -258,6 +258,23 @@ function login() {
  if (allUsers[name] && allUsers[name].password === pass) {
   const role = allUsers[name].role;
   localStorage.setItem("userSession", JSON.stringify({ name, role }));
+
+  // ⚠️ Recharge les managers si localStorage est vide (utile sur nouvel appareil)
+if (!localStorage.getItem("managers") || Object.keys(JSON.parse(localStorage.getItem("managers"))).length === 0) {
+  fetch("/static/donnees.json")
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        localStorage.setItem("ventes_raw", JSON.stringify(data)); // facultatif mais conseillé
+        generateManagers(data);  // Crée les managers
+        localStorage.setItem("managers", JSON.stringify(JSON.parse(localStorage.getItem("managers")))); // Forcer la sauvegarde
+        generateDropdownUsers(); // Pour login
+        loadBonusMalusUI();      // Pour import
+      }
+    });
+    
+}
+
   location.hash = role === "manager" ? "ventes" : "import";
 }
  else {
@@ -681,19 +698,41 @@ function formatEuro(value) {
   document.getElementById("stats-container").innerHTML = `<div class="table-scroll">${html}</div>`;
 
 document.querySelectorAll(".input-bonus").forEach(input => {
+  // Format initial à l'affichage (si non vide)
+  if (input.value && !input.value.includes("€")) {
+    input.value = parseFloat(input.value).toFixed(2) + " €";
+  }
+
+  // Quand l'utilisateur modifie la valeur
   input.addEventListener("change", () => {
     const vendeur = input.dataset.vendeur;
-    const value = parseFloat(input.value) || 0;
+    const cleaned = input.value.replace(/[^\d.,-]/g, "").replace(",", ".");
+    const value = parseFloat(cleaned) || 0;
+
+    // Format affiché
+    input.value = value.toFixed(2) + " €";
+
+    // Sauvegarde locale
+    const savedBonusManuels = JSON.parse(localStorage.getItem("bonusManuels") || "{}");
     savedBonusManuels[vendeur] = value;
     localStorage.setItem("bonusManuels", JSON.stringify(savedBonusManuels));
-    generateStats(); // Recalcul
+
+    // ✅ Sauvegarde permanente sur le serveur
+    fetch("/save_bonus", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vendeur, value })
+    });
+
+    generateStats(); // Met à jour les totaux
   });
 
-   // Pour empêcher les caractères non numériques
+  // Nettoyage live pendant la saisie
   input.addEventListener("input", () => {
     input.value = input.value.replace(/[^\d,€.-]/g, "");
   });
 });
+
 
 
 setTimeout(() => {
