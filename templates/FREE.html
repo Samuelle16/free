@@ -234,7 +234,13 @@ function router() {
 
 
  // ✅ Cacher/afficher la sidebar si besoin (optionnel)
-document.getElementById("sidebar").style.display = isLoggedIn ? "block" : "none";
+const sidebar = document.getElementById("sidebar");
+if (!isLoggedIn || hash === "login") {
+  sidebar.style.display = "none";
+} else {
+  sidebar.style.display = "block";
+}
+
 
 // ✅ Supprimer les pages interdites pour les managers dans le menu
 if (session?.role === "manager") {
