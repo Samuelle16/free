@@ -83,6 +83,12 @@ def import_penalites():
 def serve_donnees():
     return send_from_directory("static", "donnees.json")
 
+@app.route('/save_bonus_malus', methods=['POST'])
+def save_bonus_malus():
+    data = request.get_json()
+    with open("static/bonus_malus.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return {"message": "Bonus/malus enregistré"}
 
 
 # Route d'import des formateurs
@@ -109,6 +115,31 @@ def import_formateurs():
         json.dump(vendeur_to_formateurs, f, ensure_ascii=False, indent=2)
 
     return redirect('/?reload=1')
+
+@app.route("/save_bonus", methods=["POST"])
+def save_bonus():
+    data = request.get_json()
+    vendeur = data.get("vendeur")
+    value = data.get("value")
+
+    try:
+        path = "static/bonus_manuels.json"
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                bonus_data = json.load(f)
+        else:
+            bonus_data = {}
+
+        bonus_data[vendeur] = value
+
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(bonus_data, f, ensure_ascii=False, indent=2)
+
+        return "OK", 200
+    except Exception as e:
+        return f"Erreur: {str(e)}", 500
+
+
 
 # Lancement local
 if __name__ == '__main__':

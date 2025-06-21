@@ -1,0 +1,58 @@
+{
+  "ANTHONY HUMBERT": {
+    "bonus": 10,
+    "malus": 20
+  },
+  "HAKIM DAOUD": {
+    "bonus": 0,
+    "malus": 20
+  },
+  "GHALEM": {
+    "bonus": 5,
+    "malus": 20
+  },
+  "HALIM BERNAD": {
+    "bonus": 15,
+    "malus": 20
+  },
+  "HALIM GHARBI": {
+    "bonus": 15,
+    "malus": 20
+  },
+  "HALIM GUENDOUCI": {
+    "bonus": 15,
+    "malus": 20
+  },
+  "HALIM OUIRINI": {
+    "bonus": 15,
+    "malus": 20
+  },
+  "ITEB": {
+    "bonus": 0,
+    "malus": 20
+  },
+  "MARCHAL": {
+    "bonus": 10,
+    "malus": 20
+  },
+  "MOUNIR NICOLAS": {
+    "bonus": 5,
+    "malus": 20
+  },
+  "NORY GUIO": {
+    "bonus": 0,
+    "malus": 20
+  },
+  "WISSEM HALIM": {
+    "bonus": 15,
+    "malus": 20
+  },
+  "NANCY BARIS": {
+    "bonus": 0,
+    "malus": 20
+  },
+  "BRICE": {
+    "bonus": 20,
+    "malus": 20
+  }
+}

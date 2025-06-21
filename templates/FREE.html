@@ -921,8 +921,17 @@ document.getElementById("bonus-malus-form").addEventListener("submit", function 
   const config = JSON.parse(localStorage.getItem("bonusMalus") || "{}");
   config[manager] = { bonus, malus };
   localStorage.setItem("bonusMalus", JSON.stringify(config));
+
+  // ✅ Sauvegarde sur le serveur
+  fetch("/save_bonus_malus", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config)
+  });
+
   alert("Configuration enregistrée !");
 });
+
 
 document.addEventListener("DOMContentLoaded", () => {
   const session = JSON.parse(localStorage.getItem("userSession") || "{}");
@@ -951,7 +960,27 @@ function toggleSidebar() {
 </script>
 
 
+<script>
+fetch("/static/bonus_malus.json")
+  .then(res => res.json())
+  .then(data => {
+    localStorage.setItem("bonusMalus", JSON.stringify(data));
+  })
+  .catch(() => {
+    // fichier peut ne pas exister au début
+    console.warn("bonus_malus.json non trouvé (normal si jamais configuré)");
+  });
+</script>
 
+
+<script>
+  
+fetch("/static/bonus_manuels.json")
+  .then(res => res.json())
+  .then(data => {
+    localStorage.setItem("bonusManuels", JSON.stringify(data));
+  });
+</script>
 
 </body>
 </html>
