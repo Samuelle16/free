@@ -779,11 +779,17 @@ fetch("/static/donnees.json")
   .then(res => res.json())
   .then(data => {
     if (Array.isArray(data)) {
-      localStorage.setItem("ventes_raw", JSON.stringify(data)); // Facultatif, pour conserver dans l'appareil aussi
+      localStorage.setItem("ventes_raw", JSON.stringify(data));
+      
+      // ✅ Réinitialiser les managers à partir des données JSON
       generateManagers(data);
+
+      // ✅ Et recharger la liste pour la connexion et le bonus/malus
       generateDropdownUsers();
+      loadBonusMalusUI();
     }
   });
+
 </script>
 
 <script>
