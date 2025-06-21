@@ -54,6 +54,9 @@ def upload_file():
 
     return "Fichier non autorisé", 400
 
+
+
+
 @app.route('/import_penalites', methods=['POST'])
 def import_penalites():
     file = request.files.get('penaliteFile')
