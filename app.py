@@ -76,6 +76,11 @@ def import_penalites():
 
 
 
+@app.route("/static/donnees.json")
+def serve_donnees():
+    return send_from_directory("static", "donnees.json")
+
+
 
 # Route d'import des formateurs
 @app.route('/import_formateurs', methods=['POST'])
