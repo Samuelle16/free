@@ -284,8 +284,9 @@ span[style*="color:gold"] {
 
 
 #page-login {
-  background-image: url("/static/fibre.jpg"); no-repeat center center fixed;
+  background: url("/static/fibre.jpg") no-repeat center center fixed;
   background-size: cover;
+
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -294,8 +295,9 @@ span[style*="color:gold"] {
 
 
 #page-import {
-  background-image: url("/static/fibre.jpg"); no-repeat center center fixed;
-  background-size: cover;
+  background: url("/static/fibre.jpg") no-repeat center center fixed;
+ background-size: cover;
+
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -303,8 +305,9 @@ span[style*="color:gold"] {
 }
 
 #page-stats {
-  background-image: url("/static/fibre.jpg"); no-repeat center center fixed;
-  background-size: cover;
+  background: url("/static/fibre.jpg") no-repeat center center fixed;
+background-size: cover;
+
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -312,8 +315,9 @@ span[style*="color:gold"] {
 }
 
 #page-ventes {
-  background-image: url("/static/fibre.jpg"); no-repeat center center fixed;
-  background-size: cover;
+  background: url("/static/fibre.jpg") no-repeat center center fixed;
+background-size: cover;
+
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -321,8 +325,9 @@ span[style*="color:gold"] {
 }
 
 #page-changer-mdp {
-  background-image: url("/static/fibre.jpg"); no-repeat center center fixed;
-  background-size: cover;
+  background: url("/static/fibre.jpg") no-repeat center center fixed;
+background-size: cover;
+
   min-height: 100vh;
   display: flex;
   justify-content: center;
