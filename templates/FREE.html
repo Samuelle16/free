@@ -767,12 +767,21 @@ setTimeout(() => {
       select.value = saved[vendeur];
     }
 
-    select.addEventListener("change", () => {
-      const newValue = select.value;
-      saved[vendeur] = parseInt(newValue);
-      localStorage.setItem("paliersVoulus", JSON.stringify(saved));
-      generateStats(); // Recalculer
-    });
+   select.addEventListener("change", () => {
+  const newValue = select.value;
+  saved[vendeur] = parseInt(newValue);
+  localStorage.setItem("paliersVoulus", JSON.stringify(saved));
+
+  // 🔥 Enregistrement sur le serveur
+  fetch("/save_palier", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(saved)
+  });
+
+  generateStats(); // Recalculer
+});
+
   });
 }
 
@@ -890,7 +899,16 @@ fetch("/static/penalites.json")
 
 </script>
 
+<script>
+  
+fetch("/static/paliers_voulus.json")
+  .then(res => res.json())
+  .then(data => {
+    localStorage.setItem("paliersVoulus", JSON.stringify(data));
+  });
 
+  
+</script>
 
 
 <script>

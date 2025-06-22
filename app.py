@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, send_from_directory
+from flask import Flask, render_template, request, redirect, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 import pandas as pd
 import json
@@ -138,6 +138,14 @@ def save_bonus():
         return "OK", 200
     except Exception as e:
         return f"Erreur: {str(e)}", 500
+
+
+@app.route("/save_palier", methods=["POST"])
+def save_palier():
+    data = request.get_json()
+    with open("static/paliers_voulus.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return {"message": "Paliers enregistrés"}
 
 
 
