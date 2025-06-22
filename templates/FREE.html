@@ -67,6 +67,27 @@
       <button type="submit">Charger formateurs</button>
     </form>
 
+
+ <h3>Importer les pénalités 📥</h3>
+<form action="/import_penalites" method="POST" enctype="multipart/form-data">
+  <input type="file" name="penaliteFile" accept=".xlsx,.xls" required>
+  <button type="submit">Charger pénalités</button>
+</form>
+
+<h3>Corriger les anomalies de vendeurs 🛠️</h3>
+<form action="/import_anomalies" method="POST" enctype="multipart/form-data">
+  <input type="file" name="anomalieFile" accept=".xlsx,.xls" required>
+  <button type="submit">Corriger les ventes</button>
+</form>
+
+
+<h3>Corriger les vrais vendeurs 🔄</h3>
+<form action="/import_vrais_vendeurs" method="POST" enctype="multipart/form-data">
+  <input type="file" name="vraisFile" accept=".xlsx,.xls" required>
+  <button type="submit">Corriger les codes empruntés</button>
+</form>
+
+
  <h3>Bonus/Malus par Manager</h3>
 <form id="bonus-malus-form">
   <label for="manager-select">Manager :</label>
@@ -80,16 +101,17 @@
 
   <button type="submit">Enregistrer</button>
 </form>
+ 
+ <h3>Exporter les ventes</h3>
+<button onclick="exportRawVentes()">📤 Télécharger les ventes</button>
+
+<div class="admin-actions">
+  <button onclick="resetBonusManuels()">🔄 Réinitialiser les BONUS</button>
+  <button onclick="resetPenalites()">🔄 Réinitialiser les PÉNALITÉS</button>
+</div>
 
 
- <h3>Importer les pénalités 📥</h3>
-<form action="/import_penalites" method="POST" enctype="multipart/form-data">
-  <input type="file" name="penaliteFile" accept=".xlsx,.xls" required>
-  <button type="submit">Charger pénalités</button>
-</form>
 
-
-  
     <button onclick="exportManagers()">Télécharger identifiants managers</button>
 
     <div id="table-container"></div>
@@ -307,11 +329,13 @@ function generateDropdownUsers() {
   loginSelect.innerHTML = "<option value='admin'>admin</option>";
   const managers = JSON.parse(localStorage.getItem("managers") || "{}");
   Object.keys(managers).forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    loginSelect.appendChild(opt);
-  });
+  if (!name || name === "nan") return; // ⚠️ ignorer les noms vides
+  const opt = document.createElement("option");
+  opt.value = name;
+  opt.textContent = name;
+  loginSelect.appendChild(opt);
+});
+
 }
 generateDropdownUsers();
 
@@ -341,10 +365,20 @@ function renderRawVentes() {
 
 
    data.slice(1).forEach(row => {
-    const manager = row[15]?.trim(); // Colonne 16
-    if (session.role === "manager" && session.name !== manager) return;
+  const manager = row[15]?.trim(); // Colonne 16
+  const vendeur = row[6]?.trim();  // Colonne 7
 
-    html += "<tr>" + row.map(cell => `<td>${cell}</td>`).join("") + "</tr>";
+  // ❌ Ignorer les vendeurs sans info (ex: ligne ajoutée pour formateur)
+  if (row.filter(c => c?.toString().trim() !== "").length <= 1) return;
+
+  if (session.role === "manager" && session.name !== manager) return;
+
+    html += "<tr>" + row.map(cell => {
+  if (cell === undefined || cell === null || cell === "nan") return "<td></td>";
+  return `<td>${cell}</td>`;
+}).join("") + "</tr>";
+
+
   });
 
   html += "</tbody></table>";
@@ -438,8 +472,9 @@ function generateManagers(data) {
   data.slice(1).forEach(row => {
     const rowObj = Object.fromEntries(headers.map((h, i) => [h.trim(), row[i]]));
     if (rowObj["STATUT"] === "VV") return;
-    const manager = rowObj["ANIMATEUR"];
-    if (manager && !current[manager]) {
+
+    const manager = (rowObj["ANIMATEUR"] || "").trim();
+    if (manager && manager !== "NaN" && !current[manager]) {
       const pwd = Math.random().toString(36).slice(-8);
       current[manager] = { password: pwd, role: "manager" };
     }
@@ -447,6 +482,7 @@ function generateManagers(data) {
 
   localStorage.setItem("managers", JSON.stringify(current));
 }
+
 
 
 function exportManagers() {
@@ -562,11 +598,15 @@ rawData.slice(1).forEach(row => {
 
   const total = stats[vendeur].total;
   const totalVR = stats[vendeur].totalVR;
-  const palier = totalVR >= 31 ? 4 : totalVR >= 21 ? 3 : totalVR >= 11 ? 2 : totalVR >= 1 ? 1 : 0;
+  const palier = totalVR >= 31 ? 4 : totalVR >= 21 ? 3 : totalVR >= 11 ? 2 : totalVR >= 0 ? 1 : 0;
   const palierVoulu = savedPaliers[vendeur] || palier;
   const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
 
-  let commission = getCommission(contrat, statutType, palierEffectif, offreBox);
+  let commission = 0;
+if (contrat && statutType) {
+  commission = getCommission(contrat, statutType, palierEffectif, offreBox);
+}
+
   if (zone === "BONUS") commission += managerConfig.bonus;
   if (zone === "MALUS") commission -= managerConfig.malus;
 
@@ -588,7 +628,7 @@ rawData.slice(1).forEach(row => {
   stats[vendeur].total++;
 
   const palier = stats[vendeur]?.total >= 31 ? 4 : stats[vendeur]?.total >= 21 ? 3 :
-                 stats[vendeur]?.total >= 11 ? 2 : stats[vendeur]?.total >= 1 ? 1 : 0;
+                 stats[vendeur]?.total >= 11 ? 2 : stats[vendeur]?.total >= 0 ? 1 : 0;
   const palierVoulu = savedPaliers[vendeur] || palier;
   const palierEffectif = palierVoulu >= palier ? palierVoulu : palier;
 
@@ -629,7 +669,7 @@ let html = `<table><thead>
   for (const [vendeur, data] of Object.entries(stats)) {
   const total = data.total;     // affichage total (VR + MOBILE)
 const totalVR = data.totalVR; // calcul du palier basé sur VR
-const palier = totalVR >= 31 ? 4 : totalVR >= 21 ? 3 : totalVR >= 11 ? 2 : totalVR >= 1 ? 1 : 0;
+const palier = totalVR >= 31 ? 4 : totalVR >= 21 ? 3 : totalVR >= 11 ? 2 : totalVR >= 0 ? 1 : 0;
 
 
   const savedPaliers = JSON.parse(localStorage.getItem("paliersVoulus") || "{}");
@@ -645,7 +685,7 @@ const salaireFinal = data.commissionTotal + formateurSalaire + bonusManuel - pen
 
   let alert = "";
   if (palier === 4) {
-    alert = `<span style="color:gold; font-weight:bold; font-size:1.1em">👑 Bravo, vous êtes au sommet du Palier 4 !</span>`;
+    alert = `<span style="color:gold; font-weight:bold; font-size:1.1em">👑 Bravo, vous êtes au sommet avec un Palier max !</span>`;
   } else {
     let nextPalier = null;
     if (palier === 1) nextPalier = 11;
@@ -847,36 +887,97 @@ fetch("/static/donnees.json")
 </script>
 
 <script>
-
 function exportStatsToExcel() {
+
+  // 🔁 Forcer l'attribut selected sur la valeur actuellement sélectionnée
+document.querySelectorAll("select.select-palier-voulu").forEach(select => {
+  const selectedValue = select.value;
+  [...select.options].forEach(opt => {
+    opt.removeAttribute("selected");
+    if (opt.value === selectedValue) {
+      opt.setAttribute("selected", "selected");
+    }
+  });
+});
+
+
+
   const originalTable = document.querySelector("#stats-container table");
   if (!originalTable) return;
 
   const clonedTable = originalTable.cloneNode(true);
 
-  // ✅ Convertir les <select> en texte
-  clonedTable.querySelectorAll("select").forEach(select => {
-    const selectedText = select.options[select.selectedIndex].textContent;
+  // 🔁 Convertir les SELECT en texte
+  clonedTable.querySelectorAll("select.select-palier-voulu").forEach(select => {
     const td = select.closest("td");
-    td.textContent = selectedText;
+    td.textContent = select.options[select.selectedIndex]?.textContent || "";
   });
 
-  // ✅ Convertir les <input> en texte (ex: Bonus Manuel)
+  // 🔁 Convertir les INPUT BONUS en texte
   clonedTable.querySelectorAll("input.input-bonus").forEach(input => {
-    const value = input.value;
     const td = input.closest("td");
-    td.textContent = value;  // remplacer input par son texte
+    td.textContent = input.value || "0,00 €";
   });
 
-  // ✅ Export en Excel
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.table_to_sheet(clonedTable);
-  XLSX.utils.book_append_sheet(wb, ws, "Statistiques");
-  XLSX.writeFile(wb, "statistiques_salaries.xlsx");
+  // 🔎 Trouver l'index de la colonne "Détail Offres"
+  const headerRow = clonedTable.querySelector("thead tr");
+  let detailIndex = -1;
+  [...headerRow.children].forEach((th, i) => {
+    if (th.textContent.trim().toLowerCase() === "détail offres") {
+      detailIndex = i;
+    }
+  });
+
+  if (detailIndex === -1) {
+    alert("⚠️ Colonne 'Détail Offres' introuvable !");
+    return;
+  }
+
+  // 🧹 Supprimer "Détail Offres" et insérer 4 nouvelles colonnes
+  headerRow.removeChild(headerRow.children[detailIndex]);
+  ["ULTRA", "POP", "MOBILE AVEC", "MOBILE SANS"].reverse().forEach(label => {
+    const th = document.createElement("th");
+    th.textContent = label;
+    headerRow.insertBefore(th, headerRow.children[detailIndex]);
+  });
+
+  // 🧮 Remplacer les cellules ligne par ligne
+  clonedTable.querySelectorAll("tbody tr").forEach(row => {
+    const cell = row.children[detailIndex];
+    const html = cell.innerHTML;
+    row.removeChild(cell);
+
+    const counts = { "ULTRA": 0, "POP": 0, "MOBILE AVEC": 0, "MOBILE SANS": 0 };
+    for (let type in counts) {
+      const regex = new RegExp(`<strong>(\\d+)</strong>\\s*${type}`, "i");
+      const match = html.match(regex);
+      if (match) counts[type] = parseInt(match[1]);
+    }
+
+    // Ajouter les nouvelles cellules
+    ["ULTRA", "POP", "MOBILE AVEC", "MOBILE SANS"].reverse().forEach(key => {
+      const td = document.createElement("td");
+      td.textContent = counts[key];
+      row.insertBefore(td, row.children[detailIndex]);
+    });
+  });
+
+  // 📤 Export avec SheetJS
+  try {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.table_to_sheet(clonedTable);
+    XLSX.utils.book_append_sheet(wb, ws, "Statistiques");
+    XLSX.writeFile(wb, "statistiques_salaries.xlsx");
+  } catch (e) {
+    console.error("Erreur export Excel :", e);
+    alert("❌ Une erreur est survenue lors de l'export.");
+  }
 }
-
-
 </script>
+
+
+
+
 
 
 <script>
@@ -907,7 +1008,7 @@ fetch("/static/paliers_voulus.json")
     localStorage.setItem("paliersVoulus", JSON.stringify(data));
   });
 
-  
+
 </script>
 
 
@@ -1005,6 +1106,59 @@ fetch("/static/bonus_manuels.json")
     localStorage.setItem("bonusManuels", JSON.stringify(data));
   });
 </script>
+
+
+<script>
+  
+  function exportRawVentes() {
+  const rawData = JSON.parse(localStorage.getItem("ventes_raw") || "[]");
+  if (!rawData.length) {
+    alert("Aucune donnée de vente disponible.");
+    return;
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(rawData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Ventes");
+  XLSX.writeFile(wb, "ventes_detail.xlsx");
+}
+
+
+</script>
+
+
+
+<script>
+  
+function resetBonusManuels() {
+  if (!confirm("Confirmer la suppression de tous les bonus manuels ?")) return;
+  localStorage.removeItem("bonusManuels");
+
+  fetch("/reset_bonus", { method: "POST" }).then(res => {
+    if (res.ok) {
+      alert("Bonus manuels réinitialisés !");
+      generateStats();
+    }
+  });
+}
+
+function resetPenalites() {
+  if (!confirm("Confirmer la suppression de toutes les pénalités ?")) return;
+  localStorage.removeItem("penalites");
+
+  fetch("/reset_penalites", { method: "POST" }).then(res => {
+    if (res.ok) {
+      alert("Pénalités réinitialisées !");
+      generateStats();
+    }
+  });
+}
+
+
+
+
+</script>
+
 
 </body>
 </html>
