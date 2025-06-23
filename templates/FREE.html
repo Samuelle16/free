@@ -1004,10 +1004,19 @@ fetch("/static/penalites.json")
 <script>
   
 fetch("/static/paliers_voulus.json")
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error("Fichier inexistant");
+    return res.json();
+  })
   .then(data => {
     localStorage.setItem("paliersVoulus", JSON.stringify(data));
+  })
+  .catch(() => {
+    console.warn("Aucun palier voulu trouvé.");
+    localStorage.removeItem("paliersVoulus"); // <-- nettoie bien le cache local aussi
   });
+
+ 
 
 
 </script>
