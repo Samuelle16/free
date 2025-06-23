@@ -266,6 +266,15 @@ def reset_penalites():
         json.dump({}, f, ensure_ascii=False)
     return "Pénalités réinitialisées", 200
 
+@app.route('/reset_paliers', methods=['POST'])
+def reset_paliers():
+    try:
+        path = "static/paliers_voulus.json"
+        if os.path.exists(path):
+            os.remove(path)
+        return "OK", 200
+    except Exception as e:
+        return f"Erreur : {e}", 500
 
 
 

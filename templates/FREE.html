@@ -108,6 +108,7 @@
 <div class="admin-actions">
   <button onclick="resetBonusManuels()">🔄 Réinitialiser les BONUS</button>
   <button onclick="resetPenalites()">🔄 Réinitialiser les PÉNALITÉS</button>
+  <button onclick="resetPaliersVoulus()">Réinitialiser Palier Voulu</button>
 </div>
 
 
@@ -1158,6 +1159,32 @@ function resetPenalites() {
 
 
 </script>
+
+
+
+
+
+<script>
+function resetPaliersVoulus() {
+  if (!confirm("Confirmer la réinitialisation de tous les paliers voulus ?")) return;
+
+  // Supprimer du localStorage
+  localStorage.removeItem("paliersVoulus");
+
+  // Supprimer côté serveur
+  fetch("/reset_paliers", {
+    method: "POST"
+  }).then(res => {
+    if (res.ok) {
+      alert("Tous les paliers manuels ont été réinitialisés.");
+      location.reload();
+    } else {
+      alert("Erreur lors de la suppression côté serveur.");
+    }
+  });
+}
+</script>
+
 
 
 </body>
